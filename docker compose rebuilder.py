@@ -3,12 +3,14 @@ import yaml
 import subprocess
 import os
 from collections import defaultdict
+import re
 
 def run_docker_command(command):
-    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
-    if result.returncode != 0:
-        raise Exception(f"Command failed: {result.stderr}")
-    return result.stdout
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"Docker command failed: {e.stderr}")
 
 def get_services_and_stacks():
     output = run_docker_command("sudo docker service ls --format '{{.Name}} {{.Mode}}'")
@@ -33,6 +35,9 @@ def get_service_inspects(service_names):
 def get_network_mapping():
     output = run_docker_command("sudo docker network ls --format '{{.ID}} {{.Name}}'")
     return {line.split()[0][:12]: line.split()[1] for line in output.splitlines()}
+
+def sanitize_network_name(name):
+    return re.sub(r'[^a-zA-Z0-9_-]', '_', name)
 
 def parse_docker_inspect(inspect_data, services_and_stacks, network_mapping):
     compose = {
@@ -67,6 +72,14 @@ def parse_docker_inspect(inspect_data, services_and_stacks, network_mapping):
             }
         }
 
+        # Add Args as command if present
+        if 'Args' in service_spec['TaskTemplate']['ContainerSpec']:
+            service_config['command'] = service_spec['TaskTemplate']['ContainerSpec']['Args']
+
+        # Add environment variables if present
+        if 'Env' in service_spec['TaskTemplate']['ContainerSpec']:
+            service_config['environment'] = service_spec['TaskTemplate']['ContainerSpec']['Env']
+
         if 'Replicas' in service_spec['Mode']:
             service_config['deploy']['replicas'] = service_spec['Mode']['Replicas']
 
@@ -78,7 +91,7 @@ def parse_docker_inspect(inspect_data, services_and_stacks, network_mapping):
 
         if 'Mounts' in service_spec['TaskTemplate']['ContainerSpec']:
             service_config['volumes'] = [
-                f"{m['Source']}:{m['Target']}" 
+                f"{m['Source']}:{m['Target']}"
                 for m in service_spec['TaskTemplate']['ContainerSpec']['Mounts']
             ]
 
@@ -86,7 +99,7 @@ def parse_docker_inspect(inspect_data, services_and_stacks, network_mapping):
             service_config['networks'] = []
             for net in service_spec['TaskTemplate']['Networks']:
                 net_id = net['Target'][:12]
-                net_name = network_mapping.get(net_id, net['Target'])
+                net_name = sanitize_network_name(network_mapping.get(net_id, net['Target']))
                 service_config['networks'].append(net_name)
                 compose['networks'][net_name] = {'external': True}
 
@@ -122,19 +135,19 @@ def main():
     try:
         print("Fetching service and stack information...")
         services_and_stacks = get_services_and_stacks()
-        
+
         print("Fetching network information...")
         network_mapping = get_network_mapping()
-        
+
         stacks = set(info['stack'] for info in services_and_stacks.values())
-        
+
         for stack in stacks:
             print(f"\nProcessing stack: {stack}")
             stack_services = {name: info for name, info in services_and_stacks.items() if info['stack'] == stack}
             print(f"Services in {stack}: {', '.join(info['service'] for info in stack_services.values())}")
-            
+
             inspect_data = get_service_inspects(stack_services.keys())
-            
+
             print("Generating Docker Compose file...")
             compose_content = create_docker_compose(inspect_data, services_and_stacks, network_mapping)
 

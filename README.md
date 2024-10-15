@@ -40,7 +40,8 @@ The script performs the following steps:
 
 1. Ensure you have the necessary permissions to run Docker commands.
 2. Place the script in a directory where you have write permissions.
-3. Run the script with sudo:
+3. Place the script in a manager node.
+4. Run the script with sudo:
 
    ```bash
    sudo python3 main.py

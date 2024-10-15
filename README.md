@@ -42,17 +42,14 @@ The script performs the following steps:
 2. Place the script in a directory where you have write permissions.
 3. Run the script with sudo:
 
+   ```bash
+   sudo python3 main.py
    ```
-   sudo python3 docker_compose_rebuilder.py
-   ```
-
-4. The script will generate Docker Compose files for each stack in your Swarm, named `docker-compose-<stack_name>.yaml`.
 
 ## Output
 
 - The script will print progress information as it runs.
-- For each stack, it will create a Docker Compose file named `docker-compose-<stack_name>.yaml`.
-- At the end, it will print a summary of all processed stacks and their associated services.
+- For each stack, it will create a Docker Compose file named `to_be_tested--<stack_name>.yaml`.
 
 ## Error Handling
 
@@ -61,16 +58,13 @@ The script performs the following steps:
 
 ## Notes
 
-- This script requires sudo access to run Docker commands. Make sure you understand the implications of running scripts with elevated privileges.
-- The generated Docker Compose files use version 3.8 of the Compose file format.
 - Network configurations are set to `external: true` in the generated files, assuming they are pre-existing networks in your Swarm.
-- The script does not currently include environment variables in the output YAML files. If your services rely on environment variables, you'll need to add these manually to the generated Docker Compose files.
+- The script does currently include environment variables in the output YAML files. If your services rely on specific environment variables, you'll need to edit these manually to the generated Docker Compose files.
 
 ## Limitations
 
 - The script may not capture all possible Docker Swarm configurations. Complex setups might require manual adjustments to the generated Docker Compose files.
 - Secrets and configs are not currently handled by this script.
-- Environment variables are not included in the generated Docker Compose files.
 
 ## Contributing
 

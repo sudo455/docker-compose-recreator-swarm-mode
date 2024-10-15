@@ -71,4 +71,5 @@ The script performs the following steps:
 Feel free to fork this repository and submit pull requests for any enhancements or bug fixes.
 
 ## License
+
 [GNU GENERAL PUBLIC LICENSE Version 3](https://github.com/sudo455/docker-compose-recreator-swarm-mode/blob/main/LICENSE)

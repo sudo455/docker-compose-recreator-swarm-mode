@@ -1,6 +1,6 @@
 from lib.get_functions import *
 from lib.rdc_snn_cdc_scf_ccf import check_compose_file, create_docker_compose, save_compose_file
-import os
+from os import mkdir, path
 
 try:
 
@@ -24,9 +24,9 @@ try:
         print("Generating Docker Compose file...")
         compose_content = create_docker_compose(inspect_data, services_and_stacks, network_mapping)
         
-        if not os.path.exists("./docker_compose"):
+        if not path.exists("./docker_compose"):
 
-            os.mkdir("./docker_compose")
+            mkdir("./docker_compose")
 
         if check_compose_file(compose_content):
 

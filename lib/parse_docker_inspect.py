@@ -1,6 +1,6 @@
-from lib.rdc_snn_cdc_scf_ccf import sanitize_network_name
-
 def parse_docker_inspect(inspect_data, services_and_stacks, network_mapping):
+
+    from lib.rdc_snn_cdc_scf_ccf import sanitize_network_name
 
     compose = {
         'services': {},
